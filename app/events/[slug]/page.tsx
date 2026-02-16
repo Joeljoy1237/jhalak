@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 import { categories, EventItem } from "@/data/constant";
 import { slugify } from "@/lib/utils";
 import Navbar from "@/components/Navbar";
-import { ArrowLeft, Clock, Users, ScrollText, Trophy } from "lucide-react";
+import { ArrowLeft, Clock, Users, ScrollText, Trophy, LayoutGrid, Tag } from "lucide-react";
 
 export default function EventPage({ params }: { params: Promise<{ slug: string }> }) {
   // Unwrap params using React.use() - standard in Next.js 15+
@@ -60,12 +60,16 @@ export default function EventPage({ params }: { params: Promise<{ slug: string }
       );
   }
 
+  // Format Helper
+  const formatCategory = (cat: string) => cat.replace("_", "-").toUpperCase();
+  const formatType = (type: string) => type.toUpperCase();
+
   return (
     <main className="min-h-screen bg-[#050505] text-white selection:bg-[#FFD700] selection:text-black font-outfit">
       <Navbar />
       
       {/* Hero Section */}
-      <div className="relative h-[60vh] min-h-[500px] w-full overflow-hidden">
+      <div className="relative min-h-[60vh] flex flex-col justify-end w-full overflow-hidden">
          {/* Background Image with Overlay */}
          <div className="absolute inset-0">
              {event.image ? (
@@ -76,10 +80,10 @@ export default function EventPage({ params }: { params: Promise<{ slug: string }
              <div className="absolute inset-0 bg-linear-to-t from-[#050505] via-[#050505]/60 to-transparent" />
          </div>
 
-         <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-12 max-w-7xl mx-auto z-10">
+         <div className="relative z-10 p-6 md:p-12 max-w-7xl mx-auto w-full">
              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
              >
                 <Link href="/#events" className="inline-flex items-center gap-2 text-gray-400 hover:text-[#FFD700] mb-6 transition-colors group">
@@ -88,8 +92,13 @@ export default function EventPage({ params }: { params: Promise<{ slug: string }
                 </Link>
 
                 <div className="flex flex-wrap gap-3 mb-6">
+                    {/* Category Type Badge */}
+                    <span className="px-4 py-1.5 rounded-full bg-[#FFD700] text-black text-xs font-black tracking-widest uppercase">
+                        {formatCategory(event.categoryType)}
+                    </span>
+                    {/* Tags */}
                     {event.tags?.map((tag: string) => (
-                        <span key={tag} className="px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-xs font-bold tracking-wider uppercase text-[#FFD700]">
+                        <span key={tag} className="px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-xs font-bold tracking-wider uppercase text-white/70">
                             {tag}
                         </span>
                     ))}
@@ -102,12 +111,50 @@ export default function EventPage({ params }: { params: Promise<{ slug: string }
                 <p className="text-xl md:text-2xl text-gray-300 max-w-2xl leading-relaxed mb-8">
                     {event.description}
                 </p>
+
+                {/* Metadata Row */}
+                <div className="flex flex-wrap gap-4 md:gap-6 mt-8">
+                    {/* Event Type (Individual/Group) */}
+                    <div className="flex items-center gap-3 bg-white/5 backdrop-blur-md border border-white/10 rounded-xl px-5 py-3 hover:border-[#FFD700]/30 transition-colors">
+                        <LayoutGrid className="text-[#FFD700]" size={20} />
+                        <div>
+                            <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Event Type</p>
+                            <p className="font-bold text-white leading-tight">{formatType(event.eventType)}</p>
+                        </div>
+                    </div>
+
+                    {/* Time Limit */}
+                    <div className="flex items-center gap-3 bg-white/5 backdrop-blur-md border border-white/10 rounded-xl px-5 py-3 hover:border-[#FFD700]/30 transition-colors">
+                        <Clock className="text-[#FFD700]" size={20} />
+                        <div>
+                            <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Time Limit</p>
+                            <p className="font-bold text-white leading-tight">{event.timeLimit || "N/A"}</p>
+                        </div>
+                    </div>
+
+                    {/* Participants */}
+                    <div className="flex items-center gap-3 bg-white/5 backdrop-blur-md border border-white/10 rounded-xl px-5 py-3 hover:border-[#FFD700]/30 transition-colors">
+                        <Users className="text-[#FFD700]" size={20} />
+                        <div>
+                            <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Participants</p>
+                            <p className="font-bold text-white leading-tight">
+                                {event.minParticipants === null && event.maxParticipants === null 
+                                  ? "Standard" 
+                                  : event.minParticipants === event.maxParticipants 
+                                    ? event.minParticipants 
+                                    : `${event.minParticipants || 1} - ${event.maxParticipants || 'Unlimited'}`
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
              </motion.div>
          </div>
       </div>
 
       {/* Details Grid */}
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-12 md:py-20 grid grid-cols-1 lg:grid-cols-3 gap-12">
+      <div className="max-w-7xl mx-auto px-6 md:px-12 py-6 md:py-10 grid grid-cols-1 lg:grid-cols-3 gap-12">
           
           {/* Left Column: Rules & Info */}
           <div className="lg:col-span-2 space-y-12">
@@ -127,56 +174,18 @@ export default function EventPage({ params }: { params: Promise<{ slug: string }
                   </div>
 
                   <ul className="space-y-4">
-                      {event.rules?.map((rule: string, i: number) => (
-                          <li key={i} className="flex gap-4 text-gray-300 text-lg group">
-                              <span className="text-[#FFD700] font-mono mt-1 group-hover:scale-125 transition-transform">•</span>
-                              <span>{rule}</span>
-                          </li>
-                      )) || <li className="text-gray-400 italic">No specific rules listed.</li>}
+                      {event.rules && event.rules.length > 0 ? (
+                          event.rules.map((rule: string, i: number) => (
+                              <li key={i} className="flex gap-4 text-gray-300 text-lg group">
+                                  <span className="text-[#FFD700] font-mono mt-1 group-hover:scale-125 transition-transform">•</span>
+                                  <span>{rule}</span>
+                              </li>
+                          ))
+                      ) : (
+                          <li className="text-gray-400 italic">No specific rules listed.</li>
+                      )}
                   </ul>
               </motion.section>
-
-              {/* Event Metadata Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Time Limit */}
-                  <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.1 }}
-                    className="bg-white/5 border border-white/10 rounded-2xl p-6 flex items-start gap-4 hover:border-[#FFD700]/30 transition-colors"
-                  >
-                      <div className="p-3 bg-blue-500/10 rounded-xl text-blue-400">
-                          <Clock size={24} />
-                      </div>
-                      <div>
-                          <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-1">Time Limit</h3>
-                          <p className="text-xl font-bold text-white">{event.timeLimit || "N/A"}</p>
-                      </div>
-                  </motion.div>
-
-                  {/* Team Size */}
-                  <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.2 }}
-                    className="bg-white/5 border border-white/10 rounded-2xl p-6 flex items-start gap-4 hover:border-[#FFD700]/30 transition-colors"
-                  >
-                      <div className="p-3 bg-green-500/10 rounded-xl text-green-400">
-                          <Users size={24} />
-                      </div>
-                      <div>
-                          <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-1">Participants</h3>
-                          <p className="text-xl font-bold text-white">
-                              {event.minParticipants === event.maxParticipants 
-                                ? event.minParticipants 
-                                : `${event.minParticipants || 1} - ${event.maxParticipants || 'Unlimited'}`
-                              }
-                          </p>
-                      </div>
-                  </motion.div>
-              </div>
 
           </div>
 
@@ -184,8 +193,8 @@ export default function EventPage({ params }: { params: Promise<{ slug: string }
           <div className="lg:col-span-1">
               <motion.div 
                 initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
                 className="sticky top-24 space-y-6"
               >
                   <div className="bg-linear-to-br from-[#FFD700]/10 to-transparent border border-[#FFD700]/20 rounded-3xl p-8 backdrop-blur-md">

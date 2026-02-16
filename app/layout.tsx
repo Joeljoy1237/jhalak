@@ -60,7 +60,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${unbounded.variable} ${outfit.variable} font-outfit antialiased`}
+        className={`${unbounded.variable} ${outfit.variable} font-outfit antialiased selection:bg-[#FFD700] selection:text-black`}
       >
         {children}
       </body>

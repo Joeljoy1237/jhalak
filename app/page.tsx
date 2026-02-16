@@ -40,7 +40,7 @@ export default function Home() {
   };
 
   return (
-    <main className="bg-[#050505] min-h-screen text-white overflow-hidden selection:bg-[#FFD700] selection:text-black">
+    <main className="min-h-screen bg-[#050505] text-white overflow-hidden">
       {!shouldShowLoader && !isLoading ? null : (
         <AnimatePresence mode="wait">
             {isLoading && shouldShowLoader && (

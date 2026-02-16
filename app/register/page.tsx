@@ -93,7 +93,7 @@ export default function RegisterPage() {
             newEvents = pendingSoloEvents.filter(t => t !== event.title);
         } else {
             // Check Limits using validator
-            const validation = validateRegistrationRules(registrations.soloEvents, registrations.teamEvents, [...pendingSoloEvents, event.title], null);
+            const validation = validateRegistrationRules(registrations.soloEvents, registrations.teamEvents, [...pendingSoloEvents, event.title], undefined);
             
             if (!validation.valid) {
                  alert(validation.message);
@@ -179,10 +179,16 @@ export default function RegisterPage() {
     );
 
     return (
-        <main className="min-h-screen bg-[#050505] text-white p-4 pb-20 font-outfit relative">
+        <main className="min-h-screen bg-[#050505] text-white font-outfit relative overflow-y-auto">
             <Navbar />
             
-            <div className="max-w-7xl mx-auto mt-24">
+            {/* Background Elements */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+                <div className="absolute top-[-20%] left-[-10%] w-[80vw] h-[80vw] bg-blue-900/10 blur-[100px] rounded-full"></div>
+                <div className="absolute bottom-[-20%] right-[-10%] w-[80vw] h-[80vw] bg-[#BA170D]/10 blur-[100px] rounded-full"></div>
+            </div>
+
+            <div className="max-w-7xl mx-auto mt-24 px-4 pb-20 relative z-10">
                 <button 
                     onClick={() => router.back()}
                     className="flex items-center gap-2 text-gray-400 hover:text-[#FFD700] transition-colors mb-8 group"
