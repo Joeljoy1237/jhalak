@@ -1,19 +1,35 @@
+"use client";
+
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
+import EventsGrid from "@/components/EventsGrid";
+import LoadingScreen from "@/components/LoadingScreen";
+import { useState, useEffect } from "react";
+import { AnimatePresence } from "framer-motion";
 
 export default function Home() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Prevent scrolling when loading
+  useEffect(() => {
+    if (isLoading) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+  }, [isLoading]);
+
   return (
-    <main className="bg-[#0A0A0A] min-h-screen text-white overflow-hidden selection:bg-[#BA170D] selection:text-white">
+    <main className="bg-[#050505] min-h-screen text-white overflow-hidden selection:bg-[#FFD700] selection:text-black">
+      <AnimatePresence mode="wait">
+        {isLoading && (
+            <LoadingScreen key="loader" onComplete={() => setIsLoading(false)} />
+        )}
+      </AnimatePresence>
+
       <Navbar />
-      <Hero />
-      
-      {/* Additional Content Spacing to prove scroll */}
-      <section className="h-screen flex items-center justify-center bg-black/50">
-        <div className="text-center">
-          <h2 className="text-4xl font-bold mb-4">Experience the Energy</h2>
-          <p className="text-gray-400">Join us for the most electrifying event of the year.</p>
-        </div>
-      </section>
+      <Hero startAnimation={!isLoading} />
+      <EventsGrid />
     </main>
   );
 }
