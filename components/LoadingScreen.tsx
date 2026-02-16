@@ -8,7 +8,7 @@ export default function LoadingScreen({ onComplete }: { onComplete: () => void }
   useEffect(() => {
     const exitTimer = setTimeout(() => {
         onComplete();
-    }, 3500); // Increased time to read text
+    }, 2500); // Reduced time for snappier feel
 
     return () => {
         clearTimeout(exitTimer);
@@ -55,6 +55,7 @@ export default function LoadingScreen({ onComplete }: { onComplete: () => void }
                 src="/logo.png" 
                 alt="Jhalak Logo"
                 fill
+                sizes="(max-width: 768px) 192px, 256px"
                 className="object-contain drop-shadow-[0_0_20px_rgba(255,215,0,0.2)]"
                 priority
             />

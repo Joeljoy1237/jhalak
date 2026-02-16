@@ -3,41 +3,9 @@
 import { motion, useScroll, useTransform, useMotionTemplate, useMotionValue } from "framer-motion";
 import { useRef } from "react";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
-
-const categories = [
-  {
-    title: "Flagship Event",
-    items: [
-      {
-        title: "AROHA",
-        description: "The heartbeat of Jhalak. A fusion of rhythm, grace, and energy.",
-        image: "/dance.png",
-        tags: ["Main Stage"],
-        cols: "md:col-span-2 md:row-span-2",
-        gradient: "from-[#BA170D] to-black"
-      }
-    ]
-  },
-  {
-    title: "Competitions",
-    items: [
-      { title: "Karaoke Singing", tags: ["Solo", "Music"], gradient: "from-blue-900 to-black" },
-      { title: "Group Song", tags: ["Group", "Music"], gradient: "from-purple-900 to-black" },
-      { title: "Step N Synchro", tags: ["Group", "Dance"], gradient: "from-green-900 to-black" },
-      { title: "Thiruvathira", tags: ["Group", "Traditional"], gradient: "from-orange-900 to-black" },
-      { title: "Monoact", tags: ["Solo", "Acting"], gradient: "from-yellow-900 to-black" },
-      { title: "Nostalgic Dance", tags: ["Group", "Dance"], gradient: "from-pink-900 to-black" },
-      { title: "Instrumental Music", tags: ["Solo/Group", "Music"], gradient: "from-indigo-900 to-black" },
-      { title: "Oppana", tags: ["Group", "Traditional"], gradient: "from-teal-900 to-black" },
-      { title: "Fancy Dress", tags: ["Solo", "Creative"], gradient: "from-cyan-900 to-black" },
-      { title: "Fashion Show", tags: ["Group", "Fashion"], gradient: "from-rose-900 to-black" },
-      { title: "Recitation", tags: ["Solo", "Literary"], gradient: "from-emerald-900 to-black" },
-      { title: "Light Music", tags: ["Solo", "Music"], gradient: "from-sky-900 to-black" },
-      { title: "Margam Kali", tags: ["Group", "Traditional"], gradient: "from-amber-900/50 to-black" },
-    ]
-  }
-];
+import Link from "next/link";
+import { cn, slugify } from "@/lib/utils";
+import { categories } from "@/data/constant";
 
 export default function EventsGrid() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -50,7 +18,7 @@ export default function EventsGrid() {
   const heroParallax = useTransform(scrollYProgress, [0, 0.5], [0, 100]);
 
   return (
-    <div ref={containerRef} className="relative py-24 px-6 md:px-12 bg-[#050505] overflow-hidden">
+    <div id="events" ref={containerRef} className="relative py-24 px-6 md:px-12 bg-[#050505] overflow-hidden">
         
        {/* Background Grid */}
        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-size-[40px_40px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_70%,transparent_100%)]pointer-events-none"></div>
@@ -131,7 +99,7 @@ export default function EventsGrid() {
                      </p>
                      
                      <div className="flex flex-wrap gap-3">
-                        {["Group Dance", "Solo", "Fusion", "Battle"].map((tag) => (
+                        {["Group Dance", "Fusion", "Battle"].map((tag) => (
                             <span key={tag} className="px-4 py-2 bg-white/5 border border-white/10 text-gray-300 rounded-full text-xs font-bold tracking-wider hover:bg-white/10 transition-colors cursor-default">
                                 {tag}
                             </span>
@@ -174,7 +142,7 @@ function EventCard({ item, index }: { item: any, index: number }) {
     y.set(e.clientY - top);
   }
 
-  return (
+  const cardContent = (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       whileInView={{ opacity: 1, scale: 1 }}
@@ -182,7 +150,7 @@ function EventCard({ item, index }: { item: any, index: number }) {
       transition={{ duration: 0.5, delay: index * 0.05 }}
       onMouseMove={handleMouseMove}
       className={cn(
-        "group relative rounded-3xl overflow-hidden border border-white/5 bg-white/5 hover:border-[#FFD700]/20 transition-colors duration-500",
+        "group relative rounded-3xl overflow-hidden border border-white/5 bg-white/5 hover:border-[#FFD700]/20 transition-colors duration-500 h-full",
         item.cols || "col-span-1"
       )}
     >
@@ -241,5 +209,11 @@ function EventCard({ item, index }: { item: any, index: number }) {
             {String(index + 1).padStart(2, '0')}
         </div>
     </motion.div>
+  );
+
+  return (
+    <Link href={`/events/${slugify(item.title)}`} className={cn("block h-full store-card-link", item.cols)}>
+        {cardContent}
+    </Link>
   );
 }

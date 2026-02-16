@@ -1,0 +1,40 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Users Collection
+    // Anyone can read profiles (needed for team search)
+    // Only owner can write
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isOwner(userId);
+    }
+
+    // Registrations Collection (Solo Events)
+    // Doc ID is the userId
+    match /registrations/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Teams Collection (Group Events)
+    match /teams/{teamId} {
+      // Allow reading teams if signed in (could be restricted to members, but search needs access)
+      allow read: if isSignedIn();
+      
+      // Allow creation if signed in
+      allow create: if isSignedIn();
+      
+      // Allow update/delete only if user is the leader
+      allow update, delete: if isSignedIn() && resource.data.leaderId == request.auth.uid;
+    }
+  }
+}

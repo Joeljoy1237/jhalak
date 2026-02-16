@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRef, useEffect, MouseEvent, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import Link from "next/link";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -37,8 +38,8 @@ export default function Hero({ startAnimation = true }: { startAnimation?: boole
         y: 0,
         opacity: 1,
         scale: 1,
-        duration: 2,
-        ease: "power4.out"
+        duration: 1.5,
+        ease: "power3.out"
       });
       
     }, containerRef);
@@ -160,10 +161,18 @@ export default function Hero({ startAnimation = true }: { startAnimation?: boole
 
             <div className="h-px w-24 bg-linear-to-r from-transparent via-white/30 to-transparent my-4"></div>
 
-            <button className="group relative px-8 py-3 bg-transparent overflow-hidden rounded-full border border-white/20 hover:border-[#FFD700]/50 transition-colors duration-300 active:scale-95 touch-manipulation">
-                <div className="absolute inset-0 w-0 bg-[#FFD700] transition-all duration-250 ease-out group-hover:w-full opacity-10"></div>
-                <span className="relative text-white font-medium tracking-wider group-hover:text-[#FFD700] transition-colors">Explore The Lineup</span>
-            </button>
+            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 mt-2">
+                <Link href="#events"
+                 className="group relative px-8 py-3 bg-transparent overflow-hidden rounded-full border border-white/20 hover:border-[#FFD700]/50 transition-colors duration-300 active:scale-95 touch-manipulation min-w-[200px] flex items-center justify-center">
+                    <div className="absolute inset-0 w-0 bg-[#FFD700] transition-all duration-250 ease-out group-hover:w-full opacity-10"></div>
+                    <span className="relative text-white font-medium tracking-wider group-hover:text-[#FFD700] transition-colors">Explore The Lineup</span>
+                </Link>
+
+                <Link href="/register"
+                 className="relative px-8 py-3 bg-[#FFD700] rounded-full text-black font-bold tracking-wider hover:bg-[#FFC000] hover:shadow-[0_0_20px_rgba(255,215,0,0.4)] transition-all duration-300 active:scale-95 touch-manipulation min-w-[200px] flex items-center justify-center transform hover:-translate-y-1">
+                    Register Now
+                </Link>
+            </div>
           </motion.div>
       </div>
       

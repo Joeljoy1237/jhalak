@@ -15,9 +15,10 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "AROHA | Jhalak 2026",
-  description: "Unleash the Rhythm Within. AROHA - The ultimate dance event presented by Carmel College of Engineering and Technology under Jhalak.",
-  keywords: ["AROHA", "Jhalak", "Dance", "Carmel College", "College Fest", "Events", "Kerala"],
+  metadataBase: new URL("https://jhalak.carmelcollege.ac.in"),
+  title: "JHALAK 2026 | The Arts Fest of CCET",
+  description: "Experience the rhythm, energy, and talent at Jhalak 2026. Presented by Carmel College of Engineering and Technology.",
+  keywords: ["Jhalak", "CCET", "Arts Fest", "College Events", "Kerala", "Dance", "Music"],
   authors: [{ name: "Carmel College of Engineering and Technology" }],
   openGraph: {
     title: "AROHA | Jhalak 2026",
