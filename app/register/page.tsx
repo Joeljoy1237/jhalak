@@ -63,7 +63,7 @@ export default function RegisterPage() {
         if (!auth) return;
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             if (!currentUser) {
-                router.push("/login"); // Or home if login modal
+                router.push("/login?callbackUrl=/register"); 
                 return;
             }
             setUser(currentUser);
@@ -200,46 +200,34 @@ export default function RegisterPage() {
                 </button>
 
                 <header className="mb-12">
-                    <h1 className="text-4xl md:text-6xl font-black font-unbounded text-white mb-4">
+                    <h1 className="text-3xl md:text-5xl font-black font-unbounded text-white mb-6 tracking-tighter">
                         EVENT REGISTRATION
                     </h1>
                     
                     {/* Updated Status Display with 3 counters */}
                     <div className="flex flex-wrap gap-4">
-                        <div className="flex items-center gap-4 bg-white/5 border border-white/10 p-4 rounded-xl">
-                            <span className="text-gray-400 uppercase tracking-widest text-xs font-bold">Off-Stage</span>
-                            <div className="flex items-center gap-2">
-                                <span className={`text-2xl font-black ${counts.offStage > 4 ? "text-red-500" : "text-[#FFD700]"}`}>
-                                {counts.offStage}
-                                </span>
-                                <span className="text-gray-500">/ 4</span>
+                        {[
+                            { label: "Off-Stage", count: counts.offStage, max: 4, color: "text-[#FFD700]" },
+                            { label: "On-Stage (Ind)", count: counts.onStageInd, max: 3, color: "text-blue-400" },
+                            { label: "Group", count: counts.onStageGroup, max: 2, color: "text-purple-400" },
+                        ].map((p, i) => (
+                            <div key={i} className="flex items-center gap-4 bg-white/5 border border-white/10 p-4 rounded-xl min-w-[140px]">
+                                <span className="text-gray-400 uppercase tracking-[0.2em] text-[9px] font-black">{p.label}</span>
+                                <div className="flex items-baseline gap-1">
+                                    <span className={`text-2xl font-black font-unbounded ${p.color} tracking-tighter`}>
+                                        {p.count}
+                                    </span>
+                                    <span className="text-white/20 text-xs font-bold">/ {p.max}</span>
+                                </div>
                             </div>
-                        </div>
-                        <div className="flex items-center gap-4 bg-white/5 border border-white/10 p-4 rounded-xl">
-                            <span className="text-gray-400 uppercase tracking-widest text-xs font-bold">On-Stage (Ind)</span>
-                            <div className="flex items-center gap-2">
-                                <span className={`text-2xl font-black ${counts.onStageInd > 3 ? "text-red-500" : "text-[#FFD700]"}`}>
-                                {counts.onStageInd}
-                                </span>
-                                <span className="text-gray-500">/ 3</span>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-4 bg-white/5 border border-white/10 p-4 rounded-xl">
-                            <span className="text-gray-400 uppercase tracking-widest text-xs font-bold">Group</span>
-                            <div className="flex items-center gap-2">
-                                <span className={`text-2xl font-black ${counts.onStageGroup > 2 ? "text-red-500" : "text-[#FFD700]"}`}>
-                                {counts.onStageGroup}
-                                </span>
-                                <span className="text-gray-500">/ 2</span>
-                            </div>
-                        </div>
+                        ))}
                     </div>
                 </header>
 
                 <div className="space-y-16">
                     {categories.filter(cat => cat.title !== "Flagship Event").map((cat) => (
                         <section key={cat.title}>
-                            <h2 className="text-2xl font-bold font-unbounded text-[#FFD700] mb-8 flex items-center gap-4">
+                            <h2 className="text-xl md:text-2xl font-black font-unbounded text-[#FFD700] mb-8 flex items-center gap-5 uppercase tracking-tighter">
                                 {cat.title}
                                 <div className="h-px flex-1 bg-white/10"></div>
                             </h2>
@@ -288,7 +276,7 @@ export default function RegisterPage() {
                         <button
                             onClick={handleSaveChanges}
                             disabled={saving}
-                            className="bg-[#FFD700] text-black px-8 py-3 rounded-full font-bold flex items-center gap-3 shadow-[0_0_30px_rgba(255,215,0,0.3)] hover:scale-105 transition-transform disabled:opacity-50"
+                            className="bg-white text-black px-8 py-4 rounded-full font-black font-unbounded flex items-center gap-3 shadow-[0_0_40px_rgba(255,255,255,0.15)] hover:scale-105 hover:bg-[#FFD700] transition-all active:scale-95 disabled:opacity-50 uppercase tracking-tighter text-sm"
                         >
                             {saving ? (
                                 <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>

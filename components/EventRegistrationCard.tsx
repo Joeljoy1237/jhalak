@@ -97,13 +97,13 @@ export default function EventRegistrationCard({
                     <div>
                         <div className="flex items-center gap-2 mb-2">
                              {event.tags.map(t => (
-                                 <span key={t} className="text-[10px] uppercase font-bold px-2 py-1 bg-white/10 rounded-full text-gray-400">
+                                 <span key={t} className="text-[8px] uppercase font-black px-2 py-0.5 bg-white/10 rounded-sm text-gray-400 tracking-[0.2em] border border-white/5">
                                      {t}
                                  </span>
                              ))}
                         </div>
-                        <h3 className="text-xl font-bold font-unbounded text-white">{event.title}</h3>
-                        <p className="text-sm text-gray-400 mt-1 line-clamp-2">{event.description}</p>
+                        <h3 className="text-lg md:text-xl font-black font-unbounded text-white tracking-tighter leading-tight">{event.title}</h3>
+                        <p className="text-[11px] text-gray-500 mt-2 line-clamp-2 font-medium tracking-wide uppercase leading-relaxed">{event.description}</p>
                     </div>
                     
                     {isLocked ? (

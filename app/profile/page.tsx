@@ -9,9 +9,57 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import ProfileSkeleton from "@/components/ProfileSkeleton";
 import { fetchUserRegistrations, UserRegistrations } from "@/lib/registrationService";
-import { TeamRegistration } from "@/data/constant";
+import { TeamRegistration, categories } from "@/data/constant";
 import Navbar from "@/components/Navbar";
 import { ArrowLeft } from "lucide-react";
+
+// Helper to calculate usage (same as in RegisterPage)
+const getCounts = (soloEvents: string[], teamEvents: TeamRegistration[]) => {
+    let counts = { offStage: 0, onStageInd: 0, onStageGroup: 0 };
+    const allItems = categories.flatMap(c => c.items);
+    
+    // Deduplicate titles to ensure we only count each event once for the user
+    const uniqueTitles = new Set([
+        ...soloEvents,
+        ...teamEvents.map(t => t.eventTitle)
+    ]);
+    
+    // Helper to process a single title
+    const process = (title: string) => {
+         const ev = allItems.find(i => i.title === title);
+         if (!ev) return;
+         
+         if (ev.categoryType === 'off_stage') {
+             counts.offStage++;
+         } else if (ev.categoryType === 'on_stage' || ev.categoryType === 'flagship') {
+             if (ev.eventType === 'individual') {
+                 counts.onStageInd++;
+             } else {
+                 counts.onStageGroup++;
+             }
+         }
+    };
+    
+    uniqueTitles.forEach(process);
+    return counts;
+};
+
+// Helper for event tags and colors
+const getEventTheme = (title: string) => {
+    const allItems = categories.flatMap(c => c.items);
+    const ev = allItems.find(i => i.title === title);
+    if (!ev) return { label: "UNKNOWN", type: "SOLO", color: "text-gray-400", bg: "bg-gray-400/10", border: "border-gray-400/20" };
+
+    const typeLabel = ev.eventType === 'group' ? 'TEAM' : 'SOLO';
+
+    if (ev.categoryType === 'off_stage') {
+        return { label: "OFF-STAGE", type: typeLabel, color: "text-[#FFD700]", bg: "bg-[#FFD700]/10", border: "border-[#FFD700]/20" };
+    }
+    if (ev.eventType === 'individual') {
+        return { label: "ON-STAGE (IND)", type: "SOLO", color: "text-blue-400", bg: "bg-blue-400/10", border: "border-blue-400/20" };
+    }
+    return { label: "GROUP", type: "TEAM", color: "text-purple-400", bg: "bg-purple-400/10", border: "border-purple-400/20" };
+};
 
 const DEPARTMENTS = ["CIVIL", "MECH", "EEE", "CSE"];
 const SEMESTERS = ["S2", "S4", "S6", "S8"];
@@ -37,7 +85,7 @@ export default function ProfilePage() {
 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
-        router.push("/"); // Redirect home if not logged in
+        router.push("/login?callbackUrl=/profile"); // Redirect to login if not logged in
         return;
       }
       
@@ -45,9 +93,13 @@ export default function ProfilePage() {
       
       try {
         if (db) {
-            // 1. Fetch Profile
+            // Parallel Fetch: Profile & Registrations
             const userDocRef = doc(db, "users", currentUser.uid);
-            const userDoc = await getDoc(userDocRef);
+            
+            const [userDoc, regData] = await Promise.all([
+                getDoc(userDocRef),
+                fetchUserRegistrations(currentUser.uid)
+            ]);
     
             if (userDoc.exists()) {
                 const userData = userDoc.data();
@@ -61,8 +113,6 @@ export default function ProfilePage() {
                  setFormData(prev => ({ ...prev, name: currentUser.displayName || "" }));
             }
 
-            // 2. Fetch Registrations
-            const regData = await fetchUserRegistrations(currentUser.uid);
             setRegistrations(regData);
         }
       } catch (error) {
@@ -158,21 +208,21 @@ export default function ProfilePage() {
                                     <div className="w-full h-full bg-[#FFD700]" />
                                 )}
                             </div>
-                            <h1 className="text-3xl font-black font-unbounded text-white text-center">YOUR PROFILE</h1>
-                            <p className="text-gray-400 mt-2 text-center text-sm">
+                            <h1 className="text-3xl md:text-4xl font-black font-unbounded text-white text-center tracking-tighter mb-2 uppercase">YOUR PROFILE</h1>
+                            <p className="text-gray-400 mt-1 text-center text-sm md:text-base tracking-wide">
                                 Update your details for event registration.
                             </p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-8">
                         {/* Name */}
                         <div>
-                            <label className="block text-xs font-bold text-[#FFD700] uppercase tracking-wider mb-3 ml-1">Full Name <span className="text-red-500">*</span></label>
+                            <label className="block text-[10px] font-black text-[#FFD700] uppercase tracking-[0.2em] mb-3 ml-1">Full Name <span className="text-red-500">*</span></label>
                             <input 
                                 type="text" 
                                 value={formData.name}
                                 onChange={(e) => setFormData({...formData, name: e.target.value})}
-                                className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white text-lg focus:border-[#FFD700] focus:ring-1 focus:ring-[#FFD700] focus:outline-hidden transition-all placeholder:text-white/20"
+                                className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-white text-base focus:border-[#FFD700] focus:ring-1 focus:ring-[#FFD700] focus:outline-hidden transition-all placeholder:text-white/20 font-medium"
                                 placeholder="Enter your full name"
                                 required
                             />
@@ -180,14 +230,14 @@ export default function ProfilePage() {
 
                         {/* Department */}
                         <div>
-                            <label className="block text-xs font-bold text-[#FFD700] uppercase tracking-wider mb-3 ml-1">Department <span className="text-red-500">*</span></label>
+                            <label className="block text-[10px] font-black text-[#FFD700] uppercase tracking-[0.2em] mb-3 ml-1">Department <span className="text-red-500">*</span></label>
                             <div className="grid grid-cols-2 gap-3">
                                 {DEPARTMENTS.map((dept) => (
                                     <button
                                         key={dept}
                                         type="button"
                                         onClick={() => setFormData({...formData, department: dept})}
-                                        className={`p-4 rounded-xl border text-sm font-bold tracking-wide transition-all duration-300 ${
+                                        className={`p-3 rounded-xl border text-xs md:text-sm font-black tracking-widest transition-all duration-300 ${
                                             formData.department === dept 
                                             ? "bg-[#FFD700] text-black border-[#FFD700] shadow-[0_0_20px_rgba(255,215,0,0.3)] scale-[1.02]" 
                                             : "bg-white/5 text-gray-400 border-white/10 hover:border-white/30 hover:bg-white/10"
@@ -197,19 +247,19 @@ export default function ProfilePage() {
                                     </button>
                                 ))}
                             </div>
-                            {!formData.department && <p className="text-red-500/50 text-xs mt-1 ml-1">Required</p>}
+                            {!formData.department && <p className="text-red-500/50 text-[10px] mt-2 ml-1 font-bold tracking-wider">Required</p>}
                         </div>
 
                         {/* Semester */}
                         <div>
-                            <label className="block text-xs font-bold text-[#FFD700] uppercase tracking-wider mb-3 ml-1">Semester <span className="text-red-500">*</span></label>
+                            <label className="block text-[10px] font-black text-[#FFD700] uppercase tracking-[0.2em] mb-3 ml-1">Semester <span className="text-red-500">*</span></label>
                             <div className="grid grid-cols-4 gap-3">
                                 {SEMESTERS.map((sem) => (
                                     <button
                                         key={sem}
                                         type="button"
                                         onClick={() => setFormData({...formData, semester: sem})}
-                                        className={`p-4 rounded-xl border text-sm font-bold tracking-wide transition-all duration-300 ${
+                                        className={`p-3 rounded-xl border text-xs md:text-sm font-black tracking-widest transition-all duration-300 ${
                                             formData.semester === sem 
                                             ? "bg-[#FFD700] text-black border-[#FFD700] shadow-[0_0_20px_rgba(255,215,0,0.3)] scale-[1.02]" 
                                             : "bg-white/5 text-gray-400 border-white/10 hover:border-white/30 hover:bg-white/10"
@@ -219,19 +269,17 @@ export default function ProfilePage() {
                                     </button>
                                 ))}
                             </div>
-                            {!formData.semester && <p className="text-red-500/50 text-xs mt-1 ml-1">Required</p>}
+                            {!formData.semester && <p className="text-red-500/50 text-[10px] mt-2 ml-1 font-bold tracking-wider">Required</p>}
                         </div>
 
                         {/* House */}
                         <div>
-                            <label className="block text-xs font-bold text-[#FFD700] uppercase tracking-wider mb-3 ml-1">House <span className="text-red-500">*</span></label>
+                            <label className="block text-[10px] font-black text-[#FFD700] uppercase tracking-[0.2em] mb-3 ml-1">House <span className="text-red-500">*</span></label>
                             <div className="grid grid-cols-3 gap-3">
                                 {HOUSES.map((house) => {
                                     const isSelected = formData.house === house;
-                                    let borderColor = "border-white/10";
                                     let activeClass = "";
                                     
-                                    // Custom colors for each house
                                     if (house === "Red") {
                                         activeClass = isSelected ? "bg-red-600 text-white border-red-500 shadow-[0_0_20px_rgba(220,38,38,0.4)]" : "hover:text-red-500 hover:border-red-500/50";
                                     } else if (house === "Blue") {
@@ -245,7 +293,7 @@ export default function ProfilePage() {
                                             key={house}
                                             type="button"
                                             onClick={() => setFormData({...formData, house: house})}
-                                            className={`p-4 rounded-xl border text-sm font-bold tracking-wide transition-all duration-300 ${
+                                            className={`p-3 rounded-xl border text-xs md:text-sm font-black tracking-widest transition-all duration-300 ${
                                                 isSelected 
                                                 ? `${activeClass} scale-[1.02]` 
                                                 : `bg-white/5 text-gray-400 ${activeClass} hover:bg-white/10 border-white/10`
@@ -256,13 +304,13 @@ export default function ProfilePage() {
                                     );
                                 })}
                             </div>
-                            {!formData.house && <p className="text-red-500/50 text-xs mt-1 ml-1">Required</p>}
+                            {!formData.house && <p className="text-red-500/50 text-[10px] mt-2 ml-1 font-bold tracking-wider">Required</p>}
                         </div>
 
                         <button 
                             type="submit" 
                             disabled={saving}
-                            className="mt-4 bg-white text-black font-black font-unbounded text-lg py-4 rounded-xl hover:bg-[#FFD700] hover:shadow-[0_0_30px_rgba(255,215,0,0.4)] transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider"
+                            className="mt-6 bg-white text-black font-black font-unbounded text-base md:text-lg py-4 rounded-xl hover:bg-[#FFD700] hover:shadow-[0_0_30px_rgba(255,215,0,0.3)] transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-tighter"
                         >
                             {saving ? "Saving..." : "Update Profile"}
                         </button>
@@ -274,66 +322,160 @@ export default function ProfilePage() {
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="bg-black/40 backdrop-blur-xl border border-white/10 p-8 rounded-2xl w-full max-w-xl shadow-2xl flex-1 flex flex-col h-full self-stretch"
+                        className="bg-black/40 backdrop-blur-xl border border-white/10 p-8 md:p-10 rounded-2xl w-full max-w-xl shadow-2xl flex-1 flex flex-col h-full self-stretch"
                     >
-                        <h2 className="text-2xl font-black font-unbounded text-[#FFD700] mb-8 text-center uppercase tracking-wider">
-                            Your Events
-                        </h2>
+                        <div className="flex flex-col items-center mb-10">
+                            <h2 className="text-3xl md:text-4xl font-black font-unbounded text-white text-center tracking-tighter mb-2 uppercase">
+                                YOUR EVENTS
+                            </h2>
+                            <p className="text-gray-400 mt-1 text-center text-sm md:text-base tracking-wide">
+                                Your registered festival participations.
+                            </p>
+                        </div>
 
-                        <div className="flex-1 space-y-8 overflow-y-auto max-h-[600px] pr-2 custom-scrollbar">
-                            
-                            {/* Solo Events */}
-                            <div>
-                                <h3 className="text-white/50 font-bold uppercase tracking-widest text-xs mb-4">Solo Events</h3>
-                                {registrations.soloEvents.length === 0 ? (
-                                    <p className="text-gray-500 italic text-sm">No solo events registered.</p>
-                                ) : (
-                                    <div className="grid gap-3">
-                                        {registrations.soloEvents.map(event => (
-                                            <div key={event} className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center justify-between group hover:border-[#FFD700]/30 transition-colors">
-                                                <span className="font-bold text-white group-hover:text-[#FFD700] transition-colors">{event}</span>
-                                                <span className="text-xs px-2 py-1 rounded bg-[#FFD700]/20 text-[#FFD700] font-mono">SOLO</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                        {/* Event Partition Counters (Sync with Register Page) */}
+                        {(() => {
+                            const counts = getCounts(registrations.soloEvents, registrations.teamEvents);
+                            return (
+                                <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
+                                    {[
+                                        { label: "OFF-STAGE", count: counts.offStage, max: 4, color: "text-[#FFD700]" },
+                                        { label: "ON-STAGE (IND)", count: counts.onStageInd, max: 3, color: "text-blue-400" },
+                                        { label: "GROUP", count: counts.onStageGroup, max: 2, color: "text-purple-400" },
+                                    ].map((p, i) => (
+                                        <div key={i} className="flex flex-col items-center px-4 py-3 bg-white/5 border border-white/10 rounded-xl min-w-[120px]">
+                                            <span className="text-[9px] font-black text-white/40 mb-1 tracking-[0.2em]">{p.label}</span>
+                                            <span className={`text-xl font-black font-unbounded ${p.color} tracking-tighter`}>
+                                                {p.count}<span className="text-white/20 text-xs ml-1 font-bold">/ {p.max}</span>
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            );
+                        })()}
 
-                            <div className="h-px bg-white/10" />
+                        <div className="flex-1 space-y-10 overflow-y-auto max-h-[1000px] pr-2 custom-scrollbar pb-10">
+                            {(() => {
+                                const allItems = categories.flatMap(c => c.items);
+                                
+                                // Partition the events
+                                const offStageEvents: any[] = [];
+                                const onStageIndEvents: any[] = [];
+                                const groupEvents: any[] = [];
 
-                            {/* Team Events */}
-                            <div>
-                                <h3 className="text-white/50 font-bold uppercase tracking-widest text-xs mb-4">Team Events</h3>
-                                {registrations.teamEvents.length === 0 ? (
-                                    <p className="text-gray-500 italic text-sm">No team events registered.</p>
-                                ) : (
-                                    <div className="grid gap-3">
-                                        {registrations.teamEvents.map(team => (
-                                            <div key={team.id} className="bg-white/5 border border-white/10 p-4 rounded-xl group hover:border-[#FFD700]/30 transition-colors">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <span className="font-bold text-white group-hover:text-[#FFD700] transition-colors">{team.eventTitle}</span>
-                                                    <span className="text-xs px-2 py-1 rounded bg-blue-500/20 text-blue-400 font-mono">TEAM</span>
+                                // Process Solo
+                                registrations.soloEvents.forEach(title => {
+                                    const ev = allItems.find(i => i.title === title);
+                                    if (!ev) return;
+                                    const item = { title, isTeam: false, id: `solo-${title}` };
+                                    if (ev.categoryType === 'off_stage') offStageEvents.push(item);
+                                    else if (ev.eventType === 'individual') onStageIndEvents.push(item);
+                                    else groupEvents.push(item);
+                                });
+
+                                // Process Team
+                                registrations.teamEvents.forEach(team => {
+                                    const ev = allItems.find(i => i.title === team.eventTitle);
+                                    if (!ev) return;
+                                    const item = { title: team.eventTitle, isTeam: true, team, id: team.id };
+                                    if (ev.categoryType === 'off_stage') offStageEvents.push(item);
+                                    else if (ev.eventType === 'individual') onStageIndEvents.push(item);
+                                    else groupEvents.push(item);
+                                });
+
+                                const renderEvent = (item: any) => {
+                                    const theme = getEventTheme(item.title);
+                                    return (
+                                        <div key={item.id} className={`bg-white/5 border ${theme.border} p-4 rounded-xl group hover:border-[#FFD700]/30 transition-all`}>
+                                            <div className="flex items-center justify-between mb-2">
+                                                <div className="flex flex-col gap-1">
+                                                    <span className="font-bold text-white text-base group-hover:text-[#FFD700] transition-all leading-tight">{item.title}</span>
+                                                    <span className={`text-[8px] font-black uppercase tracking-[0.2em] ${theme.color}`}>{theme.label}</span>
                                                 </div>
-                                                <div className="text-xs text-gray-400">
-                                                    Role: <span className={team.leaderId === user?.uid ? "text-[#FFD700]" : "text-white"}>
-                                                        {team.leaderId === user?.uid ? "Leader" : "Member"}
-                                                    </span>
-                                                </div>
-                                                {team.teamName && (
-                                                    <div className="text-xs text-gray-500 mt-1">Team: {team.teamName}</div>
-                                                )}
+                                                <span className={`text-[9px] px-2.5 py-1 rounded-sm ${theme.bg} ${theme.color} font-black tracking-widest border ${theme.border} uppercase`}>
+                                                    {item.isTeam ? "TEAM" : "SOLO"}
+                                                </span>
                                             </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                                            
+                                            {item.isTeam && (
+                                                <div className="space-y-2 mt-3 pt-3 border-t border-white/5">
+                                                    <div className="text-[10px] text-gray-400 font-medium flex items-center gap-2">
+                                                        <span className="uppercase tracking-widest text-gray-500">Role:</span>
+                                                        <span className={item.team.leaderId === user?.uid ? "text-[#FFD700] font-black tracking-wide" : "text-white font-bold tracking-wide"}>
+                                                            {item.team.leaderId === user?.uid ? "LEADER" : "MEMBER"}
+                                                        </span>
+                                                    </div>
+                                                    {item.team.teamName && (
+                                                        <div className="text-[10px] text-gray-500 flex items-center gap-2">
+                                                            <span className="uppercase tracking-widest">Team:</span>
+                                                            <span className="text-white/60 font-medium italic uppercase">{item.team.teamName}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                };
 
+                                return (
+                                    <>
+                                        {/* Off-Stage Section */}
+                                        <section>
+                                            <h3 className="text-[#FFD700]/30 font-black uppercase tracking-[0.25em] text-[10px] mb-4 ml-1 flex items-center gap-2">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/50" />
+                                                Off-Stage Events
+                                            </h3>
+                                            {offStageEvents.length === 0 ? (
+                                                <p className="text-gray-500 italic text-xs ml-1 font-medium">No off-stage events registered.</p>
+                                            ) : (
+                                                <div className="grid gap-3">
+                                                    {offStageEvents.map(renderEvent)}
+                                                </div>
+                                            )}
+                                        </section>
+
+                                        <div className="h-px bg-white/5 my-2" />
+
+                                        {/* On-Stage Individual Section */}
+                                        <section>
+                                            <h3 className="text-blue-400/30 font-black uppercase tracking-[0.25em] text-[10px] mb-4 ml-1 flex items-center gap-2">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-400/50" />
+                                                On-Stage (Individual)
+                                            </h3>
+                                            {onStageIndEvents.length === 0 ? (
+                                                <p className="text-gray-500 italic text-xs ml-1 font-medium">No individual on-stage events registered.</p>
+                                            ) : (
+                                                <div className="grid gap-3">
+                                                    {onStageIndEvents.map(renderEvent)}
+                                                </div>
+                                            )}
+                                        </section>
+
+                                        <div className="h-px bg-white/5 my-2" />
+
+                                        {/* Group Events Section */}
+                                        <section>
+                                            <h3 className="text-purple-400/30 font-black uppercase tracking-[0.25em] text-[10px] mb-4 ml-1 flex items-center gap-2">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-purple-400/50" />
+                                                Group Events
+                                            </h3>
+                                            {groupEvents.length === 0 ? (
+                                                <p className="text-gray-500 italic text-xs ml-1 font-medium">No group events registered.</p>
+                                            ) : (
+                                                <div className="grid gap-3">
+                                                    {groupEvents.map(renderEvent)}
+                                                </div>
+                                            )}
+                                        </section>
+                                    </>
+                                );
+                            })()}
                         </div>
                         
                         <div className="mt-8 pt-6 border-t border-white/10">
                             <button 
                                 onClick={() => router.push("/register")}
-                                className="w-full bg-[#FFD700]/10 border border-[#FFD700]/20 text-[#FFD700] hover:bg-[#FFD700] hover:text-black font-bold py-4 rounded-xl transition-all uppercase tracking-wider text-sm"
+                                className="w-full bg-[#FFD700]/5 border border-[#FFD700]/10 text-[#FFD700] hover:bg-[#FFD700] hover:text-black font-black py-4 rounded-xl transition-all uppercase tracking-widest text-xs shadow-lg hover:shadow-[#FFD700]/20"
                             >
                                 Manage Registrations
                             </button>

@@ -73,7 +73,13 @@ export default function EventPage({ params }: { params: Promise<{ slug: string }
          {/* Background Image with Overlay */}
          <div className="absolute inset-0">
              {event.image ? (
-                 <Image src={event.image} alt={event.title} fill className="object-cover opacity-50" />
+                 <Image 
+                    src={event.image} 
+                    alt={event.title} 
+                    fill 
+                    priority
+                    className="object-cover opacity-50" 
+                 />
              ) : (
                  <div className={`w-full h-full bg-linear-to-br ${event.gradient || 'from-gray-900 to-black'} opacity-50`} />
              )}

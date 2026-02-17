@@ -1,14 +1,17 @@
+"use client";
+
 import { motion, LayoutGroup, AnimatePresence } from "framer-motion";
 import { auth, googleProvider, db } from "@/lib/firebase";
-import { signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/auth";
+import { signOut, onAuthStateChanged, User } from "firebase/auth";
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { LogOut, User as UserIcon } from "lucide-react";
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
@@ -43,15 +46,8 @@ export default function Navbar() {
     return () => unsubscribe();
   }, [router]);
 
-  const handleLogin = async () => {
-    if (!auth || !googleProvider) return;
-    setLoading(true);
-    try {
-      await signInWithPopup(auth, googleProvider);
-    } catch (error) {
-      console.error("Login failed", error);
-      setLoading(false);
-    }
+  const handleLogin = () => {
+    router.push(`/login?callbackUrl=${pathname}`);
   };
 
   const handleLogout = async () => {
@@ -83,21 +79,22 @@ export default function Navbar() {
               {/* Profile Pill */}
               <button 
                 onClick={() => router.push("/profile")}
-                className="flex items-center gap-4 bg-black/40 backdrop-blur-xl border border-white/10 rounded-full pl-6 pr-2 py-2 shadow-2xl hover:border-[#FFD700]/50 transition-colors group"
+                className="flex items-center bg-black/40 backdrop-blur-xl border border-white/10 rounded-full p-1.5 md:pl-6 md:pr-2 md:py-2 shadow-2xl hover:border-[#FFD700]/50 transition-colors group"
               >
-                <div className="flex flex-col items-start mr-2">
-                    <span className="text-white text-sm font-medium hidden md:block group-hover:text-[#FFD700] transition-colors">
+                <div className="hidden md:flex flex-col items-start mr-2">
+                    <span className="text-white text-sm font-medium group-hover:text-[#FFD700] transition-colors">
                         {user.displayName?.split(" ")[0]}
                     </span>
-                    <span className="text-[10px] text-gray-400 uppercase tracking-wider hidden md:block">Profile</span>
+                    <span className="text-[10px] text-gray-400 uppercase tracking-wider">Profile</span>
                 </div>
                 
-                <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-[#FFD700]/50 group-hover:border-[#FFD700] transition-colors">
+                <div className="relative w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden border-2 border-[#FFD700]/50 group-hover:border-[#FFD700] transition-colors">
                   {user.photoURL ? (
                     <Image 
                       src={user.photoURL} 
                       alt="User" 
                       fill 
+                      style={{ height: 'auto' }}
                       className="object-cover"
                     />
                   ) : (
@@ -124,18 +121,13 @@ export default function Navbar() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
               onClick={handleLogin}
-              disabled={loading}
-              className="relative group overflow-hidden rounded-full bg-white/5 border border-[#FFD700]/30 px-8 py-3 transition-all duration-300 hover:border-[#FFD700] hover:bg-white/10 hover:shadow-[0_0_20px_rgba(255,215,0,0.3)] active:scale-95"
+              className="relative group overflow-hidden rounded-full bg-white text-black px-6 py-2 transition-all duration-300 hover:bg-[#FFD700] hover:shadow-[0_0_25px_rgba(255,215,0,0.4)] active:scale-95"
             >
-              <div className="absolute inset-0 translate-y-full bg-linear-to-r from-transparent via-[#FFD700]/10 to-transparent transition-transform duration-500 group-hover:translate-y-0" />
-              
-              <div className="relative flex items-center gap-3">
-                <span className="text-white text-sm md:text-base font-bold font-unbounded tracking-wider uppercase">
-                  {loading ? "Signing In..." : "Login"}
+              <div className="relative flex items-center gap-2">
+                <span className="text-xs md:text-sm font-black font-unbounded tracking-wider uppercase">
+                  Login
                 </span>
-                {!loading && (
-                   <div className="w-2 h-2 rounded-full bg-[#FFD700] shadow-[0_0_10px_#FFD700] group-hover:scale-150 transition-transform duration-300"></div>
-                )}
+                <div className="w-1.5 h-1.5 rounded-full bg-black shadow-[0_0_8px_rgba(0,0,0,0.5)] group-hover:scale-125 transition-transform duration-300"></div>
               </div>
             </motion.button>
           )}
