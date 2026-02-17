@@ -30,7 +30,7 @@ export interface UserProfile {
     department?: string;
     semester?: string;
     mobile?: string;
-    collegeId?: string;
+    collegeId?: string; // e.g., CMA/22/CS/033
     house?: string;
     createdAt?: string;
     updatedAt?: string;

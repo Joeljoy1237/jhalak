@@ -207,3 +207,15 @@ export const resetEventCounter = async (eventTitle: string): Promise<{ success: 
 
 
 
+// 4. Update User Role
+export const updateUserRole = async (uid: string, newRole: string): Promise<{ success: boolean; message?: string }> => {
+    if (!db) return { success: false, message: "Database not initialized" };
+    try {
+        const userRef = doc(db, "users", uid);
+        await setDoc(userRef, { role: newRole }, { merge: true });
+        return { success: true, message: "User role updated successfully." };
+    } catch (error: any) {
+        console.error("Error updating user role:", error);
+        return { success: false, message: error.message || "Failed to update role." };
+    }
+};

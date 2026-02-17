@@ -5,11 +5,24 @@ import { AdminUserView, fetchAllUsersWithData } from "@/lib/adminService";
 import { Search, Download, Shield, User as UserIcon } from "lucide-react";
 import * as XLSX from 'xlsx';
 
+import Toast, { ToastType } from "@/components/ui/Toast";
+
 export default function UserManagement() {
     const [users, setUsers] = useState<AdminUserView[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
-    const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'user'>('all');
+    const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'user' | 'organizer'>('all'); // Add organizer type
+    
+    // Toast State
+    const [toast, setToast] = useState<{ message: string; type: ToastType; isVisible: boolean }>({
+        message: "",
+        type: "info",
+        isVisible: false
+    });
+
+    const showToast = (message: string, type: ToastType = "info") => {
+        setToast({ message, type, isVisible: true });
+    };
 
     useEffect(() => {
         loadData();
@@ -26,6 +39,7 @@ export default function UserManagement() {
         // Flatten data for export
         const exportData = users.map(u => ({
             Name: u.name,
+            CollegeID: u.collegeId || 'N/A',
             Email: u.email,
             Role: u.role || 'user',
             Mobile: u.mobile || 'N/A',
@@ -41,6 +55,7 @@ export default function UserManagement() {
         const ws = XLSX.utils.json_to_sheet(exportData);
         XLSX.utils.book_append_sheet(wb, ws, "Users");
         XLSX.writeFile(wb, "jhalak_users_export.xlsx");
+        showToast("Excel exported successfully!", "success");
     };
 
     const filteredUsers = users.filter(user => {
@@ -56,8 +71,36 @@ export default function UserManagement() {
 
     if (loading) return <div className="text-white text-center py-20 animate-pulse font-unbounded">LOADING USER DATA...</div>;
 
+
+    const handleUpdateRole = async (uid: string, newRole: string) => {
+        // Optimistic update
+        setUsers(prev => prev.map(u => u.uid === uid ? { ...u, role: newRole as any } : u));
+        
+        // Call API
+        try {
+            const { updateUserRole } = await import("@/lib/adminService");
+            const result = await updateUserRole(uid, newRole);
+            if (!result.success) {
+                showToast(result.message || "Failed to update role", "error");
+                loadData(); // Revert on failure
+            } else {
+                showToast(`Role updated to ${newRole}`, "success");
+            }
+        } catch (error) {
+            console.error(error);
+            showToast("Failed to update role", "error");
+            loadData();
+        }
+    };
+
     return (
         <div className="space-y-6">
+            <Toast 
+                message={toast.message} 
+                type={toast.type} 
+                isVisible={toast.isVisible} 
+                onClose={() => setToast(prev => ({ ...prev, isVisible: false }))} 
+            />
             {/* Controls */}
             <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white/5 p-4 rounded-xl border border-white/10">
                 <div className="relative w-full md:w-96">
@@ -80,6 +123,7 @@ export default function UserManagement() {
                         <option value="all">All Roles</option>
                         <option value="user">Users</option>
                         <option value="admin">Admins</option>
+                        <option value="organizer">Organizers</option>
                     </select>
 
                     <button 
@@ -139,15 +183,19 @@ export default function UserManagement() {
                                     </span>
                                 </td>
                                 <td className="p-4 text-right">
-                                    {user.role === 'admin' ? (
-                                        <span className="inline-flex items-center gap-1 text-[#FFD700] bg-[#FFD700]/10 px-2 py-1 rounded text-xs font-bold border border-[#FFD700]/20">
-                                            <Shield size={12} /> ADMIN
-                                        </span>
-                                    ) : (
-                                        <span className="inline-flex items-center gap-1 text-gray-500 bg-white/5 px-2 py-1 rounded text-xs font-medium border border-white/5">
-                                            <UserIcon size={12} /> USER
-                                        </span>
-                                    )}
+                                    <select
+                                        value={user.role || 'user'}
+                                        onChange={(e) => handleUpdateRole(user.uid, e.target.value)}
+                                        className={`bg-transparent border rounded px-2 py-1 text-xs font-bold focus:outline-none focus:border-white/50 cursor-pointer ${
+                                            user.role === 'admin' 
+                                            ? "text-[#FFD700] border-[#FFD700]/30" 
+                                            : "text-gray-400 border-white/10"
+                                        }`}
+                                    >
+                                        <option value="user" className="text-black">USER</option>
+                                        <option value="admin" className="text-black">ADMIN</option>
+                                        <option value="organizer" className="text-black">ORGANIZER</option>
+                                    </select>
                                 </td>
                             </tr>
                         ))}

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, Lock, Users, Plus, X, Search, AlertCircle } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
+import Toast, { ToastType } from "@/components/ui/Toast";
 
 interface EventRegistrationCardProps {
     event: EventItem;
@@ -31,6 +32,17 @@ export default function EventRegistrationCard({
     const [searchEmail, setSearchEmail] = useState("");
     const [searchLoading, setSearchLoading] = useState(false);
     const [searchError, setSearchError] = useState("");
+
+    // Toast State
+    const [toast, setToast] = useState<{ message: string; type: ToastType; isVisible: boolean }>({
+        message: "",
+        type: "info",
+        isVisible: false
+    });
+
+    const showToast = (message: string, type: ToastType = "info") => {
+        setToast({ message, type, isVisible: true });
+    };
 
     const isGroup = (event.minParticipants || 1) > 1;
 
@@ -76,6 +88,8 @@ export default function EventRegistrationCard({
                 // Check if already added
                 if (teamMembers.some(m => m.email === userData.email)) {
                     setSearchError("User already added to team.");
+                } else if (currentUser.house && userData.house && currentUser.house !== userData.house) {
+                   setSearchError(`Cannot add member. They are from ${userData.house}, but you are from ${currentUser.house}.`);
                 } else {
                     setTeamMembers(prev => [...prev, { 
                         email: userData.email, 
@@ -84,6 +98,7 @@ export default function EventRegistrationCard({
                         status: 'pending' 
                     }]);
                     setSearchEmail(""); // Clear input on success
+                    showToast("Team member added!", "success");
                 }
             }
         } catch (err) {
@@ -99,7 +114,7 @@ export default function EventRegistrationCard({
         const total = teamMembers.length + 1;
         const min = event.minParticipants || 1;
         if (total < min) {
-            alert(`Minimum ${min} participants required (including you).`);
+            showToast(`Minimum ${min} participants required (including you).`, "error");
             return;
         }
         onCreateTeam(teamMembers);
@@ -114,6 +129,12 @@ export default function EventRegistrationCard({
                 : "bg-white/5 border-white/10 hover:border-white/20"
             }`}
         >
+            <Toast 
+                message={toast.message} 
+                type={toast.type} 
+                isVisible={toast.isVisible} 
+                onClose={() => setToast(prev => ({ ...prev, isVisible: false }))} 
+            />
             <div className="p-6 flex flex-col gap-4">
                 <div className="flex justify-between items-start">
                     <div>

@@ -11,12 +11,16 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
 
+    function isAdmin() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
     // Users Collection
     // Anyone can read profiles (needed for team search)
-    // Only owner can write
+    // Owner can write, Admin can write (to change roles)
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow write: if isOwner(userId);
+      allow write: if isOwner(userId) || isAdmin();
     }
 
     // Registrations Collection (Solo Events)

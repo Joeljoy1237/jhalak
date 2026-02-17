@@ -15,6 +15,7 @@ export default function AdminLayout({
 }) {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
@@ -28,7 +29,6 @@ export default function AdminLayout({
     if (!auth || !db) return;
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      // ... same auth logic ...
       if (!user) {
         router.push("/login?callbackUrl=/admin");
         return;
@@ -39,8 +39,14 @@ export default function AdminLayout({
         const userDoc = await getDoc(doc(firestore, "users", user.uid));
         if (userDoc.exists()) {
             const userData = userDoc.data();
-            if (userData.role === 'admin') {
+            if (userData.role === 'admin' || userData.role === 'organizer') {
                 setIsAdmin(true);
+                setUserRole(userData.role);
+                
+                // Redirect Organizer if trying to access restricted pages
+                if (userData.role === 'organizer' && (pathname === '/admin' || pathname.startsWith('/admin/users'))) {
+                    router.replace('/admin/events');
+                }
             } else {
                 alert("Access Denied: You do not have admin privileges.");
                 router.push("/");
@@ -56,7 +62,7 @@ export default function AdminLayout({
     });
 
     return () => unsubscribe();
-  }, [router]);
+  }, [router, pathname]);
 
   if (loading) {
     return (
@@ -73,26 +79,32 @@ export default function AdminLayout({
 
   const NavLinks = () => (
       <>
-        <button 
-            onClick={() => router.push("/admin")}
-            className={`w-full text-left px-4 py-3 rounded-xl border font-bold text-sm tracking-wide transition-colors ${
-                pathname === '/admin' 
-                ? "bg-[#FFD700]/10 text-[#FFD700] border-[#FFD700]/20" 
-                : "border-transparent text-gray-400 hover:bg-white/5 hover:text-white"
-            }`}
-        >
-            Overview
-        </button>
-        <button 
-            onClick={() => router.push("/admin/users")}
-            className={`w-full text-left px-4 py-3 rounded-xl border font-bold text-sm tracking-wide transition-colors ${
-                pathname.startsWith('/admin/users')
-                ? "bg-[#FFD700]/10 text-[#FFD700] border-[#FFD700]/20" 
-                : "border-transparent text-gray-400 hover:bg-white/5 hover:text-white"
-            }`}
-        >
-            User Management
-        </button>
+        {userRole === 'admin' && (
+            <button 
+                onClick={() => router.push("/admin")}
+                className={`w-full text-left px-4 py-3 rounded-xl border font-bold text-sm tracking-wide transition-colors ${
+                    pathname === '/admin' 
+                    ? "bg-[#FFD700]/10 text-[#FFD700] border-[#FFD700]/20" 
+                    : "border-transparent text-gray-400 hover:bg-white/5 hover:text-white"
+                }`}
+            >
+                Overview
+            </button>
+        )}
+        
+        {userRole === 'admin' && (
+            <button 
+                onClick={() => router.push("/admin/users")}
+                className={`w-full text-left px-4 py-3 rounded-xl border font-bold text-sm tracking-wide transition-colors ${
+                    pathname.startsWith('/admin/users')
+                    ? "bg-[#FFD700]/10 text-[#FFD700] border-[#FFD700]/20" 
+                    : "border-transparent text-gray-400 hover:bg-white/5 hover:text-white"
+                }`}
+            >
+                User Management
+            </button>
+        )}
+
         <button 
             onClick={() => router.push("/admin/events")}
             className={`w-full text-left px-4 py-3 rounded-xl border font-bold text-sm tracking-wide transition-colors ${

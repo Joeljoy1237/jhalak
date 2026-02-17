@@ -12,6 +12,7 @@ import { fetchUserRegistrations, UserRegistrations } from "@/lib/registrationSer
 import { TeamRegistration, categories } from "@/data/constant";
 import Navbar from "@/components/Navbar";
 import { ArrowLeft } from "lucide-react";
+import Toast, { ToastType } from "@/components/ui/Toast";
 
 // Helper to calculate usage (same as in RegisterPage)
 const getCounts = (soloEvents: string[], teamEvents: TeamRegistration[]) => {
@@ -63,7 +64,7 @@ const getEventTheme = (title: string) => {
 
 const DEPARTMENTS = ["CIVIL", "MECH", "EEE", "CSE"];
 const SEMESTERS = ["S2", "S4", "S6", "S8"];
-const HOUSES = ["Red", "Blue", "Yellow"];
+const HOUSES = ["Red", "Blue", "Yellow", "Green"];
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -78,8 +79,20 @@ export default function ProfilePage() {
     department: "",
     semester: "",
     house: "",
-    mobile: "+91"
+    mobile: "+91",
+    collegeId: ""
   });
+
+  // Toast State
+  const [toast, setToast] = useState<{ message: string; type: ToastType; isVisible: boolean }>({
+    message: "",
+    type: "info",
+    isVisible: false
+  });
+
+  const showToast = (message: string, type: ToastType = "info") => {
+    setToast({ message, type, isVisible: true });
+  };
 
 
   useEffect(() => {
@@ -110,7 +123,8 @@ export default function ProfilePage() {
                     department: userData.department || "",
                     semester: userData.semester || "",
                     house: userData.house || "",
-                    mobile: userData.mobile || "+91"
+                    mobile: userData.mobile || "+91",
+                    collegeId: userData.collegeId || ""
                 });
 
             } else {
@@ -134,8 +148,20 @@ export default function ProfilePage() {
     if (!auth || !db || !user) return;
     
     // Validate all fields are present
-    if (!formData.name || !formData.department || !formData.semester || !formData.house || !formData.mobile) {
-        alert("Please fill in all fields including Mobile Number.");
+    if (!formData.name || !formData.department || !formData.semester || !formData.house || !formData.mobile || !formData.collegeId) {
+        showToast("Please fill in all fields including Mobile and College ID.", "error");
+        return;
+    }
+
+    // Validate College ID Format: CMA/22/CS/033
+    // Regex explanation:
+    // ^CMA\/ - Starts with CMA/
+    // \d{2}\/ - 2 digits (Year) then /
+    // [A-Z]{2,3}\/ - 2 or 3 uppercase letters (Dept) then /
+    // \d{3}$ - 3 digits (RollNo) then end
+    const collegeIdRegex = /^CMA\/\d{2}\/[A-Z]{2,3}\/\d{3}$/;
+    if (!collegeIdRegex.test(formData.collegeId)) {
+        showToast("Invalid College ID. Expected: CMA/22/CS/033", "error");
         return;
     }
 
@@ -149,7 +175,6 @@ export default function ProfilePage() {
       }
 
       // 2. Save to Firestore
-      // 2. Save to Firestore
       const updateData: any = {
         name: formData.name,
         email: user.email,
@@ -157,6 +182,7 @@ export default function ProfilePage() {
         semester: formData.semester,
         house: formData.house,
         mobile: formData.mobile,
+        collegeId: formData.collegeId,
         photoURL: user.photoURL,
         updatedAt: new Date().toISOString()
       };
@@ -165,78 +191,114 @@ export default function ProfilePage() {
 
 
       console.log("Profile updated successfully");
-      alert("Profile Updated Successfully!");
+      showToast("Profile Updated Successfully!", "success");
     } catch (error) {
       console.error("Error updating profile:", error);
-      alert("Failed to update profile. Please try again.");
+      showToast("Failed to update profile. Please try again.", "error");
     } finally {
       setSaving(false);
     }
   };
 
 
-  if (loading) {
-      return <ProfileSkeleton />;
-  }
+    const handleCollegeIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value.toUpperCase();
+        const cleaned = val.replace(/[^A-Z0-9]/g, "");
+        let formatted = "";
 
-  return (
-    <div className="min-h-screen bg-[#050505] text-white font-outfit relative overflow-y-auto">
-        <Navbar />
+        if (cleaned.length > 0) formatted += cleaned.substring(0, 3);
+        if (cleaned.length > 3) formatted += "/" + cleaned.substring(3, 5);
+        if (cleaned.length > 5) {
+            const remaining = cleaned.substring(5);
+            const match = remaining.match(/^([A-Z]*)(.*)$/);
+            if (match) {
+                formatted += "/" + match[1];
+                if (match[2]) formatted += "/" + match[2];
+            }
+        }
         
-        {/* Background Elements */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-            <div className="absolute top-[-20%] left-[-10%] w-[80vw] h-[80vw] bg-blue-900/10 blur-[100px] rounded-full"></div>
-            <div className="absolute bottom-[-20%] right-[-10%] w-[80vw] h-[80vw] bg-[#BA170D]/10 blur-[100px] rounded-full"></div>
-        </div>
+        // Allow user to manually enter '/' without it being deleted immediately
+        // This preserves the slash if the user typed it, even if the auto-format wouldn't have added it yet
+        if (val.endsWith('/') && !formatted.endsWith('/')) {
+            formatted += "/";
+        }
 
-        <div className="relative z-10 container mx-auto px-4 py-24">
+        setFormData({ ...formData, collegeId: formatted });
+    };
+
+    return (
+        <div className="min-h-screen bg-[#050505] text-white font-outfit relative overflow-y-auto">
+            <Navbar />
             
-            <div className="max-w-7xl mx-auto flex flex-col gap-8">
-                {/* Back Button */}
-                <button 
-                    onClick={() => router.back()}
-                    className="flex items-center gap-2 text-gray-400 hover:text-[#FFD700] transition-colors self-start group"
-                >
-                    <div className="p-2 rounded-full bg-white/5 group-hover:bg-[#FFD700]/10 border border-white/10 group-hover:border-[#FFD700]/50 transition-all">
-                        <ArrowLeft size={20} />
-                    </div>
-                    <span className="font-medium">Back</span>
-                </button>
+            {/* Background Elements */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+                <div className="absolute top-[-20%] left-[-10%] w-[80vw] h-[80vw] bg-blue-900/10 blur-[100px] rounded-full"></div>
+                <div className="absolute bottom-[-20%] right-[-10%] w-[80vw] h-[80vw] bg-[#BA170D]/10 blur-[100px] rounded-full"></div>
+            </div>
 
-                <div className="flex flex-col md:flex-row gap-8 items-start w-full">
-                    {/* Profile Form Section */}
-                    <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="bg-black/40 backdrop-blur-xl border border-white/10 p-8 rounded-2xl w-full max-w-xl shadow-2xl flex-1"
+            <div className="relative z-10 container mx-auto px-4 py-24">
+                
+                <div className="max-w-7xl mx-auto flex flex-col gap-8">
+                    {/* Back Button */}
+                    <button 
+                        onClick={() => router.back()}
+                        className="flex items-center gap-2 text-gray-400 hover:text-[#FFD700] transition-colors self-start group"
                     >
-                    <div className="flex flex-col items-center mb-10">
-                            <div className="relative w-24 h-24 mb-4 rounded-full overflow-hidden border-2 border-[#FFD700]">
-                                {user?.photoURL ? (
-                                    <Image src={user.photoURL} alt="Profile" fill className="object-cover" />
-                                ) : (
-                                    <div className="w-full h-full bg-[#FFD700]" />
-                                )}
-                            </div>
-                            <h1 className="text-3xl md:text-4xl font-black font-unbounded text-white text-center tracking-tighter mb-2 uppercase">YOUR PROFILE</h1>
-                            <p className="text-gray-400 mt-1 text-center text-sm md:text-base tracking-wide">
-                                Update your details for event registration.
-                            </p>
-                    </div>
-
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-8">
-                        {/* Name */}
-                        <div>
-                            <label className="block text-[10px] font-black text-[#FFD700] uppercase tracking-[0.2em] mb-3 ml-1">Full Name <span className="text-red-500">*</span></label>
-                            <input 
-                                type="text" 
-                                value={formData.name}
-                                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                                className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-white text-base focus:border-[#FFD700] focus:ring-1 focus:ring-[#FFD700] focus:outline-hidden transition-all placeholder:text-white/20 font-medium"
-                                placeholder="Enter your full name"
-                                required
-                            />
+                        <div className="p-2 rounded-full bg-white/5 group-hover:bg-[#FFD700]/10 border border-white/10 group-hover:border-[#FFD700]/50 transition-all">
+                            <ArrowLeft size={20} />
                         </div>
+                        <span className="font-medium">Back</span>
+                    </button>
+
+                    <div className="flex flex-col md:flex-row gap-8 items-start w-full">
+                        {/* Profile Form Section */}
+                        <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="bg-black/40 backdrop-blur-xl border border-white/10 p-8 rounded-2xl w-full max-w-xl shadow-2xl flex-1"
+                        >
+                        <div className="flex flex-col items-center mb-10">
+                                <div className="relative w-24 h-24 mb-4 rounded-full overflow-hidden border-2 border-[#FFD700]">
+                                    {user?.photoURL ? (
+                                        <Image src={user.photoURL} alt="Profile" fill className="object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full bg-[#FFD700]" />
+                                    )}
+                                </div>
+                                <h1 className="text-3xl md:text-4xl font-black font-unbounded text-white text-center tracking-tighter mb-2 uppercase">YOUR PROFILE</h1>
+                                <p className="text-gray-400 mt-1 text-center text-sm md:text-base tracking-wide">
+                                    Update your details for event registration.
+                                </p>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="flex flex-col gap-8">
+                            {/* Name */}
+                            <div>
+                                <label className="block text-[10px] font-black text-[#FFD700] uppercase tracking-[0.2em] mb-3 ml-1">Full Name <span className="text-red-500">*</span></label>
+                                <input 
+                                    type="text" 
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-white text-base focus:border-[#FFD700] focus:ring-1 focus:ring-[#FFD700] focus:outline-hidden transition-all placeholder:text-white/20 font-medium"
+                                    placeholder="Enter your full name"
+                                    required
+                                />
+                            </div>
+
+                            {/* College ID */}
+                            <div>
+                                <label className="block text-[10px] font-black text-[#FFD700] uppercase tracking-[0.2em] mb-3 ml-1">College ID <span className="text-red-500">*</span></label>
+                                <input 
+                                    type="text" 
+                                    value={formData.collegeId}
+                                    onChange={handleCollegeIdChange}
+                                    maxLength={16}
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-white text-base focus:border-[#FFD700] focus:ring-1 focus:ring-[#FFD700] focus:outline-hidden transition-all placeholder:text-white/20 font-medium uppercase"
+                                    placeholder="CMA/22/CS/XXX"
+                                    required
+                                />
+                                <p className="text-xs text-gray-500 mt-1 ml-1">Format: CMA/YY/DEPT/XXX</p>
+                            </div>
 
                         {/* Mobile Number */}
                         <div>
@@ -298,7 +360,7 @@ export default function ProfilePage() {
                         {/* House */}
                         <div>
                             <label className="block text-[10px] font-black text-[#FFD700] uppercase tracking-[0.2em] mb-3 ml-1">House <span className="text-red-500">*</span></label>
-                            <div className="grid grid-cols-3 gap-3">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                 {HOUSES.map((house) => {
                                     const isSelected = formData.house === house;
                                     let activeClass = "";
@@ -309,6 +371,8 @@ export default function ProfilePage() {
                                         activeClass = isSelected ? "bg-blue-600 text-white border-blue-500 shadow-[0_0_20px_rgba(37,99,235,0.4)]" : "hover:text-blue-500 hover:border-blue-500/50";
                                     } else if (house === "Yellow") {
                                         activeClass = isSelected ? "bg-yellow-500 text-black border-yellow-400 shadow-[0_0_20px_rgba(234,179,8,0.4)]" : "hover:text-yellow-400 hover:border-yellow-400/50";
+                                    } else if (house === "Green") {
+                                        activeClass = isSelected ? "bg-green-600 text-white border-green-500 shadow-[0_0_20px_rgba(22,163,74,0.4)]" : "hover:text-green-500 hover:border-green-500/50";
                                     }
 
                                     return (
