@@ -77,8 +77,10 @@ export default function ProfilePage() {
     name: "",
     department: "",
     semester: "",
-    house: ""
+    house: "",
+    mobile: "+91"
   });
+
 
   useEffect(() => {
     if (!auth || !db) return;
@@ -107,8 +109,10 @@ export default function ProfilePage() {
                     name: userData.name || currentUser.displayName || "",
                     department: userData.department || "",
                     semester: userData.semester || "",
-                    house: userData.house || ""
+                    house: userData.house || "",
+                    mobile: userData.mobile || "+91"
                 });
+
             } else {
                  setFormData(prev => ({ ...prev, name: currentUser.displayName || "" }));
             }
@@ -130,10 +134,11 @@ export default function ProfilePage() {
     if (!auth || !db || !user) return;
     
     // Validate all fields are present
-    if (!formData.name || !formData.department || !formData.semester || !formData.house) {
-        alert("Please fill in all fields including House.");
+    if (!formData.name || !formData.department || !formData.semester || !formData.house || !formData.mobile) {
+        alert("Please fill in all fields including Mobile Number.");
         return;
     }
+
 
     setSaving(true);
 
@@ -144,15 +149,20 @@ export default function ProfilePage() {
       }
 
       // 2. Save to Firestore
-      await setDoc(doc(db, "users", user.uid), {
+      // 2. Save to Firestore
+      const updateData: any = {
         name: formData.name,
         email: user.email,
         department: formData.department,
         semester: formData.semester,
         house: formData.house,
+        mobile: formData.mobile,
         photoURL: user.photoURL,
         updatedAt: new Date().toISOString()
-      }, { merge: true }); // Merge to avoid overwriting other fields if any
+      };
+
+      await setDoc(doc(db, "users", user.uid), updateData, { merge: true }); // Merge to avoid overwriting other fields if any
+
 
       console.log("Profile updated successfully");
       alert("Profile Updated Successfully!");
@@ -224,6 +234,19 @@ export default function ProfilePage() {
                                 onChange={(e) => setFormData({...formData, name: e.target.value})}
                                 className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-white text-base focus:border-[#FFD700] focus:ring-1 focus:ring-[#FFD700] focus:outline-hidden transition-all placeholder:text-white/20 font-medium"
                                 placeholder="Enter your full name"
+                                required
+                            />
+                        </div>
+
+                        {/* Mobile Number */}
+                        <div>
+                            <label className="block text-[10px] font-black text-[#FFD700] uppercase tracking-[0.2em] mb-3 ml-1">Mobile Number <span className="text-red-500">*</span></label>
+                            <input 
+                                type="tel" 
+                                value={formData.mobile}
+                                onChange={(e) => setFormData({...formData, mobile: e.target.value})}
+                                className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-white text-base focus:border-[#FFD700] focus:ring-1 focus:ring-[#FFD700] focus:outline-hidden transition-all placeholder:text-white/20 font-medium"
+                                placeholder="+91 XXXXX XXXXX"
                                 required
                             />
                         </div>

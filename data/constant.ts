@@ -11,7 +11,9 @@ export interface EventItem {
     rules: string[];
     eventType: 'individual' | 'group';
     categoryType: 'on_stage' | 'off_stage' | 'flagship';
+    shortCode?: string;
 }
+
 
 export interface Category {
     title: string;
@@ -29,9 +31,13 @@ export interface UserProfile {
     semester?: string;
     mobile?: string;
     collegeId?: string;
+    house?: string;
     createdAt?: string;
     updatedAt?: string;
+    role?: 'user' | 'organizer' | 'admin';
 }
+
+
 
 export interface TeamMember {
     uid: string; // Firebase Auth UID
@@ -76,7 +82,8 @@ export const categories: Category[] = [
                 timeLimit: null,
                 rules: [],
                 eventType: 'group',
-                categoryType: 'flagship'
+                categoryType: 'flagship',
+                shortCode: 'ARH'
             }
         ]
     },
@@ -100,8 +107,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-gray-900 to-black",
                 eventType: 'group',
-                categoryType: 'on_stage'
+                categoryType: 'on_stage',
+                shortCode: 'MIME'
             },
+
             {
                 title: "Karaoke Song (Individual)",
                 description: "Solo singing performance with karaoke track.",
@@ -117,8 +126,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-blue-900 to-black",
                 eventType: 'individual',
-                categoryType: 'on_stage'
+                categoryType: 'on_stage',
+                shortCode: 'KARA'
             },
+
             {
                 title: "Group Song",
                 description: "Group singing performance in any language.",
@@ -133,8 +144,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-purple-900 to-black",
                 eventType: 'group',
-                categoryType: 'on_stage'
+                categoryType: 'on_stage',
+                shortCode: 'GRPSG'
             },
+
             {
                 title: "Thiruvathira",
                 description: "Traditional Kerala dance form performed in a group.",
@@ -150,8 +163,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-orange-900 to-black",
                 eventType: 'group',
-                categoryType: 'on_stage'
+                categoryType: 'on_stage',
+                shortCode: 'THIR'
             },
+
             {
                 title: "Monoact",
                 description: "Solo acting performance with a message.",
@@ -165,8 +180,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-yellow-900 to-black",
                 eventType: 'individual',
-                categoryType: 'on_stage'
+                categoryType: 'on_stage',
+                shortCode: 'MONO'
             },
+
             {
                 title: "Group Dance",
                 description: "Group dance performance with choreography.",
@@ -183,8 +200,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-green-900 to-black",
                 eventType: 'group',
-                categoryType: 'on_stage'
+                categoryType: 'on_stage',
+                shortCode: 'GRPDA'
             },
+
             {
                 title: "Step N Synchro",
                 description: "Synchronized dance routine for pairs emphasizing uniformity and timing.",
@@ -202,8 +221,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-teal-900 to-black",
                 eventType: 'group',
-                categoryType: 'on_stage'
+                categoryType: 'on_stage',
+                shortCode: 'STEP'
             },
+
             {
                 title: "Nostalgia (Dance)",
                 description: "Dance performance representing a specific past era (80s, 90s, early 2000s, folk tradition, vintage cinema).",
@@ -220,8 +241,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-pink-900 to-black",
                 eventType: 'group',
-                categoryType: 'on_stage'
+                categoryType: 'on_stage',
+                shortCode: 'NOST'
             },
+
             {
                 title: "Instrumental Music Solo",
                 description: "Solo performance on any instrument (string, wind, keyboard).",
@@ -238,8 +261,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-indigo-900 to-black",
                 eventType: 'individual',
-                categoryType: 'on_stage'
+                categoryType: 'on_stage',
+                shortCode: 'INST'
             },
+
             {
                 title: "Oppana",
                 description: "Traditional Muslim wedding dance performed by girls.",
@@ -257,8 +282,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-rose-900 to-black",
                 eventType: 'group',
-                categoryType: 'on_stage'
+                categoryType: 'on_stage',
+                shortCode: 'OPPA'
             },
+
             {
                 title: "Fancy Dress",
                 description: "Portray a famous personality, mythological figure, or creative concept.",
@@ -274,8 +301,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-cyan-900 to-black",
                 eventType: 'individual',
-                categoryType: 'on_stage'
+                categoryType: 'on_stage',
+                shortCode: 'FANC'
             },
+
             {
                 title: "Fashion Show",
                 description: "Team fashion walk based on a specific theme.",
@@ -292,8 +321,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-amber-900 to-black",
                 eventType: 'group',
-                categoryType: 'on_stage'
+                categoryType: 'on_stage',
+                shortCode: 'FASH'
             },
+
             {
                 title: "Recitation",
                 description: "Recite a poem by a famous poet or an original piece.",
@@ -307,8 +338,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-emerald-900 to-black",
                 eventType: 'individual',
-                categoryType: 'on_stage'
+                categoryType: 'on_stage',
+                shortCode: 'RECI'
             },
+
             {
                 title: "Light Music",
                 description: "Solo singing with live accompaniment (one instrument or shruti box).",
@@ -323,8 +356,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-sky-900 to-black",
                 eventType: 'individual',
-                categoryType: 'on_stage'
+                categoryType: 'on_stage',
+                shortCode: 'LIGH'
             },
+
             {
                 title: "Margam Kali",
                 description: "Traditional dance form of the Syrian Christians in Kerala.",
@@ -339,8 +374,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-violet-900 to-black",
                 eventType: 'group',
-                categoryType: 'on_stage'
+                categoryType: 'on_stage',
+                shortCode: 'MARG'
             },
+
             {
                 title: "Solo Dance",
                 description: "Individual dance performance in any style.",
@@ -356,8 +393,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-fuchsia-900 to-black",
                 eventType: 'individual',
-                categoryType: 'on_stage'
+                categoryType: 'on_stage',
+                shortCode: 'SOLO'
             },
+
             {
                 title: "RJ Hunt",
                 description: "On-the-spot hosting challenge with a given theme.",
@@ -372,8 +411,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-lime-900 to-black",
                 eventType: 'individual',
-                categoryType: 'on_stage'
+                categoryType: 'on_stage',
+                shortCode: 'RJHT'
             },
+
             {
                 title: "Vattapattu",
                 description: "Traditional folk song performance with percussion.",
@@ -389,8 +430,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-stone-900 to-black",
                 eventType: 'group',
-                categoryType: 'on_stage'
+                categoryType: 'on_stage',
+                shortCode: 'VATT'
             },
+
             {
                 title: "Kadhaprasangam (Story Telling)",
                 description: "Solo storytelling with a social or moral message.",
@@ -405,8 +448,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-red-900 to-black",
                 eventType: 'individual',
-                categoryType: 'on_stage'
+                categoryType: 'on_stage',
+                shortCode: 'KADH'
             },
+
             {
                 title: "Mimicry",
                 description: "Solo vocal imitation of sounds, voices, or characters.",
@@ -421,8 +466,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-orange-800 to-black",
                 eventType: 'individual',
-                categoryType: 'on_stage'
+                categoryType: 'on_stage',
+                shortCode: 'MIMI'
             },
+
             {
                 title: "Group Folks' Song (Nadanpattu)",
                 description: "Group performance of authentic folk songs.",
@@ -438,8 +485,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-amber-800 to-black",
                 eventType: 'group',
-                categoryType: 'on_stage'
+                categoryType: 'on_stage',
+                shortCode: 'NADAN'
             },
+
             {
                 title: "Spot Choreography",
                 description: "Impromptu dance choreography on a given theme or music.",
@@ -455,8 +504,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-lime-800 to-black",
                 eventType: 'group',
-                categoryType: 'on_stage'
+                categoryType: 'on_stage',
+                shortCode: 'SPOT'
             },
+
             {
                 title: "Classical Dance",
                 description: "Solo performance in a recognised classical dance form.",
@@ -472,8 +523,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-purple-800 to-black",
                 eventType: 'individual',
-                categoryType: 'on_stage'
+                categoryType: 'on_stage',
+                shortCode: 'CLAS'
             },
+
             {
                 title: "Karnatic Music",
                 description: "Solo classical Carnatic vocal performance.",
@@ -488,7 +541,8 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-indigo-800 to-black",
                 eventType: 'individual',
-                categoryType: 'on_stage'
+                categoryType: 'on_stage',
+                shortCode: 'KARN'
             }
         ]
     },
@@ -512,8 +566,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-blue-800 to-black",
                 eventType: 'individual',
-                categoryType: 'off_stage'
+                categoryType: 'off_stage',
+                shortCode: 'ESSW'
             },
+
             {
                 title: "Poem Writing (English, Malayalam, Hindi)",
                 description: "Compose a poem on a given theme or starting line.",
@@ -530,8 +586,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-green-800 to-black",
                 eventType: 'individual',
-                categoryType: 'off_stage'
+                categoryType: 'off_stage',
+                shortCode: 'POEM'
             },
+
             {
                 title: "Drawing - Pencil Sketching, Water Colour",
                 description: "Create a drawing based on a given theme.",
@@ -547,8 +605,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-yellow-800 to-black",
                 eventType: 'individual',
-                categoryType: 'off_stage'
+                categoryType: 'off_stage',
+                shortCode: 'DRAW'
             },
+
             {
                 title: "Glass Painting",
                 description: "Paint on glass sheet with a given theme.",
@@ -563,8 +623,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-pink-800 to-black",
                 eventType: 'individual',
-                categoryType: 'off_stage'
+                categoryType: 'off_stage',
+                shortCode: 'GLAS'
             },
+
             {
                 title: "Poster Designing",
                 description: "Design a hand-drawn poster on a given theme.",
@@ -580,8 +642,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-purple-800 to-black",
                 eventType: 'individual',
-                categoryType: 'off_stage'
+                categoryType: 'off_stage',
+                shortCode: 'POST'
             },
+
             {
                 title: "Collage",
                 description: "Create a collage using provided materials on a given theme.",
@@ -597,8 +661,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-red-800 to-black",
                 eventType: 'individual',
-                categoryType: 'off_stage'
+                categoryType: 'off_stage',
+                shortCode: 'COLL'
             },
+
             {
                 title: "Calligraphy",
                 description: "Write a given quote or poem in an artistic style.",
@@ -613,8 +679,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-indigo-700 to-black",
                 eventType: 'individual',
-                categoryType: 'off_stage'
+                categoryType: 'off_stage',
+                shortCode: 'CALL'
             },
+
             {
                 title: "Cartoon",
                 description: "Draw a cartoon on a given theme.",
@@ -631,8 +699,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-orange-700 to-black",
                 eventType: 'individual',
-                categoryType: 'off_stage'
+                categoryType: 'off_stage',
+                shortCode: 'CART'
             },
+
             {
                 title: "Extempore (English, Malayalam, Hindi)",
                 description: "Speak on a topic drawn by lot with minimal preparation.",
@@ -646,8 +716,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-teal-700 to-black",
                 eventType: 'individual',
-                categoryType: 'off_stage'
+                categoryType: 'off_stage',
+                shortCode: 'EXTM'
             },
+
             {
                 title: "Quiz",
                 description: "General knowledge and current affairs quiz for teams of two.",
@@ -661,8 +733,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-cyan-700 to-black",
                 eventType: 'group',
-                categoryType: 'off_stage'
+                categoryType: 'off_stage',
+                shortCode: 'QUIZ'
             },
+
             {
                 title: "Debate",
                 description: "Structured debate on a given topic (team of two).",
@@ -680,8 +754,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-rose-700 to-black",
                 eventType: 'group',
-                categoryType: 'off_stage'
+                categoryType: 'off_stage',
+                shortCode: 'DEBA'
             },
+
             {
                 title: "Art from Waste",
                 description: "Create artwork using waste materials.",
@@ -696,8 +772,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-lime-700 to-black",
                 eventType: 'individual',
-                categoryType: 'off_stage'
+                categoryType: 'off_stage',
+                shortCode: 'ARTW'
             },
+
             {
                 title: "Logo Making",
                 description: "Design a hand-drawn logo on a given theme.",
@@ -713,8 +791,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-amber-700 to-black",
                 eventType: 'individual',
-                categoryType: 'off_stage'
+                categoryType: 'off_stage',
+                shortCode: 'LOGO'
             },
+
             {
                 title: "Caption Writing",
                 description: "Write a caption for a displayed image.",
@@ -731,8 +811,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-emerald-700 to-black",
                 eventType: 'individual',
-                categoryType: 'off_stage'
+                categoryType: 'off_stage',
+                shortCode: 'CAPT'
             },
+
             {
                 title: "Face Painting",
                 description: "Team event: one painter and one model create a face painting.",
@@ -749,8 +831,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-fuchsia-700 to-black",
                 eventType: 'group',
-                categoryType: 'off_stage'
+                categoryType: 'off_stage',
+                shortCode: 'FACE'
             },
+
             {
                 title: "Mehendi Designing",
                 description: "Apply freehand mehendi on hand.",
@@ -765,8 +849,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-rose-600 to-black",
                 eventType: 'individual',
-                categoryType: 'off_stage'
+                categoryType: 'off_stage',
+                shortCode: 'MEHN'
             },
+
             {
                 title: "Movie Scene Recreation",
                 description: "Recreate a scene from a film in a pre-recorded video.",
@@ -784,8 +870,10 @@ export const categories: Category[] = [
                 ],
                 gradient: "from-sky-700 to-black",
                 eventType: 'group',
-                categoryType: 'off_stage'
+                categoryType: 'off_stage',
+                shortCode: 'MCR'
             }
+
         ]
     }
 ];

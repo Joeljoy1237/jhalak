@@ -27,14 +27,23 @@ service cloud.firestore {
 
     // Teams Collection (Group Events)
     match /teams/{teamId} {
-      // Allow reading teams if signed in (could be restricted to members, but search needs access)
       allow read: if isSignedIn();
-      
-      // Allow creation if signed in
       allow create: if isSignedIn();
-      
-      // Allow update/delete only if user is the leader
       allow update, delete: if isSignedIn() && resource.data.leaderId == request.auth.uid;
     }
+
+    // Counters for Chest Numbers
+    match /counters/{eventId} {
+      allow read, write: if isSignedIn(); // Needed for transactions
+    }
+
+    // Individual Registration Details (For Admin/Export)
+    match /event_registrations/{regId} {
+      // Allow reading: Owner, Admin, or if it's a team registration (members might need to see)
+      allow read: if isSignedIn(); 
+      // Allow create/write: Owner (transaction)
+      allow write: if isSignedIn();
+    }
+
   }
 }

@@ -94,7 +94,7 @@ export default function Navbar() {
                       src={user.photoURL} 
                       alt="User" 
                       fill 
-                      style={{ height: 'auto' }}
+                      // style={{ height: 'auto' }}
                       className="object-cover"
                     />
                   ) : (

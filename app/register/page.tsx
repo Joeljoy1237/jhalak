@@ -255,6 +255,7 @@ export default function RegisterPage() {
                                             onLeaveTeam={async () => {
                                                 if (teamReg?.id) await handleLeaveTeam(teamReg.id);
                                             }}
+                                            currentUser={user}
                                         />
                                     );
                                 })}

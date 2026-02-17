@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { EventItem, TeamRegistration } from "@/data/constant";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Lock, Users, Plus, X, Search, AlertCircle } from "lucide-react";
@@ -13,6 +13,7 @@ interface EventRegistrationCardProps {
     onToggle: () => void;
     onCreateTeam: (members: any[]) => Promise<void>; // Pass members array
     onLeaveTeam: () => Promise<void>;
+    currentUser: any; // User object from firebase auth
 }
 
 export default function EventRegistrationCard({
@@ -22,7 +23,8 @@ export default function EventRegistrationCard({
     teamDetails,
     onToggle,
     onCreateTeam,
-    onLeaveTeam
+    onLeaveTeam,
+    currentUser
 }: EventRegistrationCardProps) {
     const [isExpanded, setIsExpanded] = useState(false);
     const [teamMembers, setTeamMembers] = useState<{ email: string; uid?: string; name?: string; status?: string }[]>([]);
@@ -32,8 +34,28 @@ export default function EventRegistrationCard({
 
     const isGroup = (event.minParticipants || 1) > 1;
 
+    // Debounce Search Effect
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(() => {
+            if (searchEmail) {
+                handleSearchUser();
+            } else {
+                setSearchError(""); // Clear error if empty
+            }
+        }, 1000);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchEmail]);
+
     const handleSearchUser = async () => {
         if (!searchEmail) return;
+        
+        // Self-add check
+        if (currentUser && searchEmail.toLowerCase() === currentUser.email?.toLowerCase()) {
+            setSearchError("You are already the team leader.");
+            return;
+        }
+
         if (!db) {
             setSearchError("Database not initialized");
             return;
@@ -55,13 +77,13 @@ export default function EventRegistrationCard({
                 if (teamMembers.some(m => m.email === userData.email)) {
                     setSearchError("User already added to team.");
                 } else {
-                    setTeamMembers([...teamMembers, { 
+                    setTeamMembers(prev => [...prev, { 
                         email: userData.email, 
                         uid: userDoc.id, 
                         name: userData.name,
                         status: 'pending' 
                     }]);
-                    setSearchEmail("");
+                    setSearchEmail(""); // Clear input on success
                 }
             }
         } catch (err) {
@@ -172,21 +194,19 @@ export default function EventRegistrationCard({
                                     <h4 className="text-sm font-bold text-white mb-2">Build Your Team</h4>
                                     
                                     {/* Member Input */}
-                                    <div className="flex gap-2 mb-2">
+                                    <div className="flex gap-2 mb-2 relative">
                                         <input 
                                             type="email" 
                                             placeholder="Member Email" 
-                                            className="flex-1 bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-[#FFD700] outline-hidden"
+                                            className={`flex-1 bg-black/20 border ${searchError ? 'border-red-500' : 'border-white/10'} rounded-lg px-3 py-2 text-sm text-white focus:border-[#FFD700] outline-hidden pr-8`}
                                             value={searchEmail}
                                             onChange={(e) => setSearchEmail(e.target.value)}
                                         />
-                                        <button 
-                                            onClick={handleSearchUser}
-                                            disabled={searchLoading}
-                                            className="p-2 bg-white/10 rounded-lg hover:bg-white/20 disabled:opacity-50"
-                                        >
-                                            <Search size={16} />
-                                        </button>
+                                        {searchLoading && (
+                                            <div className="absolute right-3 top-2.5">
+                                                <div className="w-4 h-4 border-2 border-[#FFD700] border-t-transparent rounded-full animate-spin"></div>
+                                            </div>
+                                        )}
                                     </div>
                                     {searchError && <p className="text-xs text-red-500 mb-2 flex items-center gap-1"><AlertCircle size={10}/> {searchError}</p>}
 
